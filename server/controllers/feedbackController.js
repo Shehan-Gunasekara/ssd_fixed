@@ -1,5 +1,3 @@
-// DO NOT
-
 const { default: mongoose } = require("mongoose");
 const Feedback = require("../models/Feedback");
 const Order = require("../models/Order");
@@ -13,7 +11,7 @@ const deleteFeedback = async (req, res) => {
 
 //* create new feedback
 const newFeedback = async (req, res) => {
-  const newFeedback = {
+  const feedbackData = {
     orderId: req.params.id,
     CustomerID: req.body.CustomerID,
     name: req.body.name,
@@ -21,50 +19,29 @@ const newFeedback = async (req, res) => {
     rating: req.body.rating,
   };
 
-  await Feedback.findOneAndUpdate({ orderId: req.params.id }, newFeedback, {
+  await Feedback.findOneAndUpdate({ orderId: req.params.id }, feedbackData, {
     upsert: true,
     new: true,
     setDefaultsOnInsert: true,
   })
     .then((feedback) => res.status(200).json(feedback))
-    .catch((err) => res.status(400).send(err));
-
-  // try {
-  //     const feed = await Feedback.create(newFeedback);
-  //     res.status(200).json(feed);
-  // } catch (err) {
-  //     res.status(400).json({ err: err });
-  // }
+    .catch((err) => res.status(400).send({ error: "An error occurred" }));
 };
 
 // update as Completed by User
-//Update order as delivering
 const updateasCompletedbyUser = async (req, res) => {
-  updateStatus = {
-    DelevaryStatus: req.body.DelevaryStatus,
+  const updateStatus = {
+    DeliveryStatus: req.body.DeliveryStatus, // Fixed typo from "DelevaryStatus"
   };
 
   await Order.findOneAndUpdate({ _id: req.params.id }, updateStatus, {
     new: true,
   })
     .then((order) => res.status(200).json(order))
-    .catch((err) => res.status(400).send(err));
+    .catch(() => res.status(400).send({ error: "An error occurred" }));
 };
 
-// //add new feedback
-// var newFeedback = async (req, res) => {
-//     newFeedback = {
-//         deliveryFeedbacks: req.body.deliveryFeedbacks
-//     };
-
-//     await Delivery.findOneAndUpdate({ _id: req.params.id }, newFeedback, {
-//         new: true,
-//     })
-//         .then((delivery) => res.status(200).json(delivery))
-//         .catch((err) => res.status(400).send(err));
-// };
-
-//* find a delivery by id
+// find a delivery feedback by id
 const deliveryFeedbackById = async (req, res) => {
   Feedback.findOne({ orderId: req.params.id })
     .then((feedback) => {
@@ -74,28 +51,6 @@ const deliveryFeedbackById = async (req, res) => {
     .catch((error) => res.status(400).json({ error: error.message }));
 };
 
-// //* find a delivery by id
-// const deliveryByName = async (req, res) => {
-//     Feedback.find({ orderId: { $regex: req.params.orderId + ".*" } }).then(
-//         (feedback) => {
-//             res.json(feedback);
-//         }
-//     );
-//! };
-
-// update as Completed by User
-// var updateasCompletedbyUser = async (req, res) => {
-//     newFeedback = {
-//         deliveryStatus: req.body.deliveryStatus
-//     };
-
-//     await Delivery.findOneAndUpdate({ _id: req.params.id }, newFeedback, {
-//         new: true,
-//     })
-//         .then((delivery) => res.status(200).json(delivery))
-//         .catch((err) => res.status(400).send(err));
-// };
-
 // get all feedbacks
 const getAllFeedbacks = async (req, res) => {
   Feedback.find().then((feedback) => {
@@ -103,29 +58,20 @@ const getAllFeedbacks = async (req, res) => {
   });
 };
 
-// const getAllFeedbacks = async (req, res) => {
-//     await Feedback.find()
-//         .then((feedback) => res.status(200).json(feedback));
-// };
-
-//count
+// count ratings
 const countRating = async (req, res) => {
-  await Feedback.aggregate()
-
-    .group({
-      _id: "$rating",
-
-      count: {
-        $count: {},
+  await Feedback.aggregate([
+    {
+      $group: {
+        _id: "$rating",
+        count: { $sum: 1 }, // Corrected to $sum: 1
       },
-    })
-
-    .sort({
-      _id: 1,
-    })
-
+    },
+    {
+      $sort: { _id: 1 },
+    },
+  ])
     .then((data) => res.json(data))
-
     .catch((error) => res.json({ error: error.message }));
 };
 

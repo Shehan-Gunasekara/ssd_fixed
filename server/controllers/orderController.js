@@ -42,18 +42,34 @@ const getSingleOrder = async (req, res) => {
 };
 
 //Create new order
-const createOrder = async (req, res) => {
-  const order = new Order({
-    CustomerID: req.body.cus_id,
-    Status: req.body.status,
+const validator = require("validator"); // Import validator for sanitization
 
-    DelevaryStatus: req.body.delevary_status,
-    Reciever_Name: req.body.recieverName,
-    Shpiing_Address: req.body.address,
-    Phone: req.body.phoneNumber,
+const createOrder = async (req, res) => {
+  // Sanitize user inputs
+  const sanitizedCustomerID = validator.escape(req.body.cus_id);
+  const sanitizedStatus = validator.escape(req.body.status);
+  const sanitizedDelevaryStatus = validator.escape(req.body.delevary_status);
+  const sanitizedRecieverName = validator.escape(req.body.recieverName);
+  const sanitizedAddress = validator.escape(req.body.address);
+  const sanitizedPhoneNumber = validator.escape(req.body.phoneNumber);
+
+  const order = new Order({
+    CustomerID: sanitizedCustomerID,
+    Status: sanitizedStatus,
+    DelevaryStatus: sanitizedDelevaryStatus,
+    Reciever_Name: sanitizedRecieverName,
+    Shpiing_Address: sanitizedAddress,
+    Phone: sanitizedPhoneNumber,
   });
-  await order.save();
-  res.send(order);
+
+  await order
+    .save()
+    .then(() => res.status(201).json(order))
+    .catch((err) =>
+      res
+        .status(400)
+        .json({ error: "Failed to create order", details: err.message })
+    );
 };
 
 //Delete an order
@@ -119,17 +135,28 @@ const updateOrderasdelivering = async (req, res) => {
   );
 };
 
-//update order as completed
 const updateOrderascompleted = async (req, res) => {
-  updateStatus = {
-    DelevaryStatus: req.body.DelevaryStatus,
+  // Sanitize user input
+  const sanitizedDelevaryStatus = validator.escape(req.body.DelevaryStatus); // Escape special characters to prevent XSS
+
+  const updateStatus = {
+    DelevaryStatus: sanitizedDelevaryStatus,
   };
 
   await Order.findOneAndUpdate({ _id: req.params.id }, updateStatus, {
     new: true,
   })
-    .then((order) => res.status(200).json(order))
-    .catch((err) => res.status(400).send(err));
+    .then((order) => {
+      if (order) {
+        // Ensure the response is sanitized
+        res.status(200).json(order);
+      } else {
+        res.status(404).json({ error: "Order not found" });
+      }
+    })
+    .catch((err) =>
+      res.status(400).send({ error: "An error occurred", details: err.message })
+    );
 };
 
 //Reject an order
