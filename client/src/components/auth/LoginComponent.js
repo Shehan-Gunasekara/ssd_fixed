@@ -60,7 +60,8 @@ function LoginComponent() {
             <div className="account-login-inner">
               <form
                 onSubmit={handleSubmit}
-                className="ltn__form-box contact-form-box"
+                className="ltn__form-box contact-form-box "
+                style={{ width: "500px" }}
               >
                 {error && <p style={{ color: "red" }}>*{error}</p>}
                 <input
@@ -84,16 +85,24 @@ function LoginComponent() {
                     type="submit"
                   >
                     SIGN IN
-                  </button>
+                  </button>{" "}
+                  <div
+                    className="w-full"
+                    style={{
+                      width: "full",
+                      display: "flex",
+                      justifyContent: "center",
+                      marginTop: "10px",
+                    }}
+                  >
+                    <GoogleLogin
+                      onSuccess={handleGoogleSuccess}
+                      onError={handleGoogleError}
+                      width={5000}
+                    />
+                  </div>
                 </div>
               </form>
-              <div className="btn-wrapper mt-10">
-                {/* Google Login Button */}
-                <GoogleLogin
-                  onSuccess={handleGoogleSuccess}
-                  onError={handleGoogleError}
-                />
-              </div>
             </div>
           </div>
           <div className="col-lg-6">
