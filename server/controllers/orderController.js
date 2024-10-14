@@ -3,6 +3,7 @@
 const Order = require("../models/Order");
 const mongoose = require("mongoose");
 var sendEmail = require("../utils/sendEmail");
+const xss = require("xss");
 
 //Get all orders
 const getAllOrders = async (req, res) => {
@@ -42,18 +43,16 @@ const getSingleOrder = async (req, res) => {
 };
 
 //Create new order
-const createOrder = async (req, res) => {
-  const order = new Order({
-    CustomerID: req.body.cus_id,
-    Status: req.body.status,
+const updateOrderascompleted = async (req, res) => {
+  const updateStatus = {
+    DelevaryStatus: xss(req.body.DelevaryStatus),
+  };
 
-    DelevaryStatus: req.body.delevary_status,
-    Reciever_Name: req.body.recieverName,
-    Shpiing_Address: req.body.address,
-    Phone: req.body.phoneNumber,
-  });
-  await order.save();
-  res.send(order);
+  await Order.findOneAndUpdate({ _id: xss(req.params.id) }, updateStatus, {
+    new: true,
+  })
+    .then((order) => res.status(200).json(xss(order)))
+    .catch((err) => res.status(400).send(xss(err)));
 };
 
 //Delete an order
@@ -119,17 +118,18 @@ const updateOrderasdelivering = async (req, res) => {
   );
 };
 
-//update order as completed
-const updateOrderascompleted = async (req, res) => {
-  updateStatus = {
-    DelevaryStatus: req.body.DelevaryStatus,
-  };
+const createOrder = async (req, res) => {
+  const order = new Order({
+    CustomerID: xss(req.body.cus_id),
+    Status: xss(req.body.status),
+    DelevaryStatus: xss(req.body.delevary_status),
+    Reciever_Name: xss(req.body.recieverName),
+    Shpiing_Address: xss(req.body.address),
+    Phone: xss(req.body.phoneNumber),
+  });
 
-  await Order.findOneAndUpdate({ _id: req.params.id }, updateStatus, {
-    new: true,
-  })
-    .then((order) => res.status(200).json(order))
-    .catch((err) => res.status(400).send(err));
+  await order.save();
+  res.send(xss(order));
 };
 
 //Reject an order
