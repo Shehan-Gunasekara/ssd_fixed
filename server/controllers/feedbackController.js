@@ -12,7 +12,7 @@ const deleteFeedback = async (req, res) => {
     .catch((err) => res.status(404).json({ success: false }));
 };
 
-//* create new feedback
+//* Create new feedback
 const newFeedback = async (req, res) => {
   const sanitizedFeedback = {
     orderId: xss(req.params.id),
@@ -31,12 +31,26 @@ const newFeedback = async (req, res) => {
       setDefaultsOnInsert: true,
     }
   )
-    .then((feedback) => res.status(200).json(xss(feedback)))
-    .catch((err) => res.status(400).send(xss(err)));
+    .then((feedback) => {
+      if (feedback) {
+        // Only send back relevant information
+        res.status(200).json({
+          message: "Feedback submitted successfully",
+          orderId: feedback.orderId, // Send only necessary fields
+          rating: feedback.rating, // Include relevant fields without sensitive data
+        });
+      } else {
+        res.status(404).json({ error: "Feedback not found" });
+      }
+    })
+    .catch(() =>
+      res
+        .status(400)
+        .json({ error: "An error occurred while submitting feedback." })
+    );
 };
 
-// update as Completed by User
-//Update order as delivering
+// Update order as delivering
 const updateasCompletedbyUser = async (req, res) => {
   const updateStatus = {
     DelevaryStatus: xss(req.body.DelevaryStatus),
@@ -45,8 +59,23 @@ const updateasCompletedbyUser = async (req, res) => {
   await Order.findOneAndUpdate({ _id: xss(req.params.id) }, updateStatus, {
     new: true,
   })
-    .then((order) => res.status(200).json(xss(order)))
-    .catch((err) => res.status(400).send(xss(err)));
+    .then((order) => {
+      if (order) {
+        // Only send back relevant information
+        res.status(200).json({
+          message: "Order status updated successfully",
+          orderId: order._id, // Send the order ID or any other necessary field
+          DelevaryStatus: order.DelevaryStatus, // Include relevant fields without sensitive data
+        });
+      } else {
+        res.status(404).json({ error: "Order not found" });
+      }
+    })
+    .catch(() =>
+      res
+        .status(400)
+        .json({ error: "An error occurred while updating the order." })
+    );
 };
 
 // //add new feedback

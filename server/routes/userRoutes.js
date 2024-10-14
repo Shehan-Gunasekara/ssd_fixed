@@ -1,7 +1,8 @@
 const express = require("express");
 const passport = require("passport");
 const jwt = require("jsonwebtoken");
-const { OAuth2Client } = require("google-auth-library"); // Install: npm install google-auth-library
+const rateLimit = require("express-rate-limit");
+const { OAuth2Client } = require("google-auth-library");
 const {
   createUser,
   getUsers,
@@ -15,6 +16,13 @@ const {
   adminResetPassword,
   getAccountUsage,
 } = require("../controllers/userController");
+
+// Set up rate limiter: maximum of 5 requests per minute
+const authLimiter = rateLimit({
+  windowMs: 1 * 60 * 1000, // 1 minute
+  max: 5, // limit each IP to 5 requests per windowMs
+  message: { error: "Too many requests, please try again later." },
+});
 
 const router = express.Router();
 
@@ -55,9 +63,10 @@ router.post("/login", loginUser);
 // signup route
 router.post("/signup", signupUser);
 
-// Google OAuth login route
+// Google OAuth login route with rate limiting
 router.get(
   "/auth/google",
+  authLimiter, // Apply rate limiting
   passport.authenticate("google", { scope: ["profile", "email"] })
 );
 
