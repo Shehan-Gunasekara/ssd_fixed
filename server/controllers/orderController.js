@@ -42,7 +42,19 @@ const getSingleOrder = async (req, res) => {
   res.status(200).json(singleOrder);
 };
 
-//Create new order
+// //Create new order
+// const updateOrderascompleted = async (req, res) => {
+//   const updateStatus = {
+//     DelevaryStatus: xss(req.body.DelevaryStatus),
+//   };
+
+//   await Order.findOneAndUpdate({ _id: xss(req.params.id) }, updateStatus, {
+//     new: true,
+//   })
+//     .then((order) => res.status(200).json(xss(order)))
+//     .catch((err) => res.status(400).send(xss(err)));
+// };
+
 const updateOrderascompleted = async (req, res) => {
   const updateStatus = {
     DelevaryStatus: xss(req.body.DelevaryStatus),
@@ -51,8 +63,23 @@ const updateOrderascompleted = async (req, res) => {
   await Order.findOneAndUpdate({ _id: xss(req.params.id) }, updateStatus, {
     new: true,
   })
-    .then((order) => res.status(200).json(xss(order)))
-    .catch((err) => res.status(400).send(xss(err)));
+    .then((order) => {
+      // Only send back relevant information
+      if (order) {
+        res.status(200).json({
+          message: "Order status updated successfully",
+          orderId: order._id, // You can include the order ID or any other non-sensitive info
+          DelevaryStatus: order.DelevaryStatus, // Send only necessary fields
+        });
+      } else {
+        res.status(404).json({ error: "Order not found" });
+      }
+    })
+    .catch(() =>
+      res
+        .status(400)
+        .json({ error: "An error occurred while updating the order." })
+    );
 };
 
 //Delete an order

@@ -2,6 +2,7 @@ require("dotenv").config();
 
 const express = require("express");
 const multer = require("multer");
+const rateLimit = require("express-rate-limit");
 
 const passport = require("passport"); // Added for passport
 const session = require("express-session"); // Added for session management
@@ -45,6 +46,13 @@ const cors = require("cors");
 // express app
 const app = express();
 
+// Set up rate limiter: maximum of 5 requests per minute
+const authLimiter = rateLimit({
+  windowMs: 1 * 60 * 1000, // 1 minute
+  max: 5, // limit each IP to 5 requests per windowMs
+  message: { error: "Too many requests, please try again later." },
+});
+
 const corsOptions = {
   origin: [process.env.CLIENT_DOMAIN],
   methods: "GET,POST,PUT,DELETE",
@@ -66,13 +74,16 @@ app.use((req, res, next) => {
   next();
 });
 
-// Google OAuth Routes
+// Google OAuth Routes with Rate Limiting
 app.get(
   "/api/users/auth/google",
+  authLimiter, // Apply rate limiting
   passport.authenticate("google", { scope: ["profile", "email"] })
 );
+
 app.get(
   "/api/users/auth/google/callback",
+  authLimiter, // Apply rate limiting
   passport.authenticate("google", { failureRedirect: "/login" }),
   (req, res) => {
     const token = createToken(req.user._id); // Assuming you have a token generation logic
