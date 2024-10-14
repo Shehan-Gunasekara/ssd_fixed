@@ -3,6 +3,7 @@
 const { default: mongoose } = require("mongoose");
 const Feedback = require("../models/Feedback");
 const Order = require("../models/Order");
+const xss = require("xss");
 
 //*delete feedback
 const deleteFeedback = async (req, res) => {
@@ -13,42 +14,39 @@ const deleteFeedback = async (req, res) => {
 
 //* create new feedback
 const newFeedback = async (req, res) => {
-  const newFeedback = {
-    orderId: req.params.id,
-    CustomerID: req.body.CustomerID,
-    name: req.body.name,
-    deliveryFeedback: req.body.deliveryFeedback,
-    rating: req.body.rating,
+  const sanitizedFeedback = {
+    orderId: xss(req.params.id),
+    CustomerID: xss(req.body.CustomerID),
+    name: xss(req.body.name),
+    deliveryFeedback: xss(req.body.deliveryFeedback),
+    rating: xss(req.body.rating),
   };
 
-  await Feedback.findOneAndUpdate({ orderId: req.params.id }, newFeedback, {
-    upsert: true,
-    new: true,
-    setDefaultsOnInsert: true,
-  })
-    .then((feedback) => res.status(200).json(feedback))
-    .catch((err) => res.status(400).send(err));
-
-  // try {
-  //     const feed = await Feedback.create(newFeedback);
-  //     res.status(200).json(feed);
-  // } catch (err) {
-  //     res.status(400).json({ err: err });
-  // }
+  await Feedback.findOneAndUpdate(
+    { orderId: sanitizedFeedback.orderId },
+    sanitizedFeedback,
+    {
+      upsert: true,
+      new: true,
+      setDefaultsOnInsert: true,
+    }
+  )
+    .then((feedback) => res.status(200).json(xss(feedback)))
+    .catch((err) => res.status(400).send(xss(err)));
 };
 
 // update as Completed by User
 //Update order as delivering
 const updateasCompletedbyUser = async (req, res) => {
-  updateStatus = {
-    DelevaryStatus: req.body.DelevaryStatus,
+  const updateStatus = {
+    DelevaryStatus: xss(req.body.DelevaryStatus),
   };
 
-  await Order.findOneAndUpdate({ _id: req.params.id }, updateStatus, {
+  await Order.findOneAndUpdate({ _id: xss(req.params.id) }, updateStatus, {
     new: true,
   })
-    .then((order) => res.status(200).json(order))
-    .catch((err) => res.status(400).send(err));
+    .then((order) => res.status(200).json(xss(order)))
+    .catch((err) => res.status(400).send(xss(err)));
 };
 
 // //add new feedback
