@@ -5,6 +5,8 @@ const express = require("express");
 const multer = require("multer");
 const rateLimit = require("express-rate-limit");
 
+const helmet = require('helmet'); // Import helmet
+
 const passport = require("passport"); // Added for passport
 const session = require("express-session"); // Added for session management
 const GoogleStrategy = require("passport-google-oauth20").Strategy; // Added for Google OAuth
@@ -46,6 +48,9 @@ const mongoose = require("mongoose");
 const cors = require("cors");
 // express app
 const app = express();
+
+// Helmet to secure Express apps by setting various HTTP headers
+app.use(helmet());
 
 // Set up rate limiter: maximum of 5 requests per minute
 const authLimiter = rateLimit({
@@ -113,6 +118,10 @@ app.use((req, res, next) => {
     "default-src 'self'; script-src 'self' https://trusted-cdn.com; img-src 'self' https://trusted-cdn.com; style-src 'self' https://trusted-cdn.com"
   );
   console.log(req.url);
+
+  //Custom security headers to prevent clivkjacking
+  res.setHeader('X-Frame-Options', 'DENY'); // Prevents embedding the page in any frame
+  res.setHeader('Content-Security-Policy', "frame-ancestors 'none'");
   next();
 });
 
