@@ -7,16 +7,15 @@ function Deliveries(props) {
   const { id } = useParams();
   const navigate = useNavigate();
 
-  const [orderDeliveringAllAlert, setOrderDeliveringAllAlert] = useState('')
-  const [orderDeliveringAllAlertError, setOrderDeliveringAllAlertError] = useState('')
+  const [orderDeliveringAllAlert, setOrderDeliveringAllAlert] = useState("");
+  const [orderDeliveringAllAlertError, setOrderDeliveringAllAlertError] =
+    useState("");
 
   // const complete = "Pending";
 
-  useEffect(() => { setOrders(props.orders) }
-    , [props.orders])
-
-
-
+  useEffect(() => {
+    setOrders(props.orders);
+  }, [props.orders]);
 
   //* Update the Delivering status
   async function handleUpdateontheway(orderId) {
@@ -25,6 +24,7 @@ function Deliveries(props) {
       body: JSON.stringify({ DelevaryStatus: "Delivering" }),
       headers: {
         "Content-Type": "application/json",
+        "X-CSRF-Token": localStorage.getItem("csrfToken"),
       },
     });
 
@@ -33,45 +33,60 @@ function Deliveries(props) {
     if (!response.ok) {
       setOrderDeliveringAllAlertError(
         <>
-          <div className="alert alert-danger alert-dismissible fade show" role="alert">
+          <div
+            className="alert alert-danger alert-dismissible fade show"
+            role="alert"
+          >
             <i className="bi bi-exclamation-octagon me-1"></i>
             Failed to update the status as delivering! &nbsp;
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            <button
+              type="button"
+              class="btn-close"
+              data-bs-dismiss="alert"
+              aria-label="Close"
+            ></button>
           </div>
         </>
-      )
+      );
 
       setTimeout(function () {
         window.location.reload();
-        setOrderDeliveringAllAlertError('')
+        setOrderDeliveringAllAlertError("");
       }, 2000);
     }
 
-    if (response.ok) {      
+    if (response.ok) {
       setOrderDeliveringAllAlert(
         <>
-          <div className="alert alert-success alert-dismissible fade show" role="alert">
+          <div
+            className="alert alert-success alert-dismissible fade show"
+            role="alert"
+          >
             <i className="bi bi-check-circle me-1"></i>
             delivery status update as "Delivering" for Order ID : {orderId}
-            <button type="button" className="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            <button
+              type="button"
+              className="btn-close"
+              data-bs-dismiss="alert"
+              aria-label="Close"
+            ></button>
           </div>
         </>
-      )
+      );
       setTimeout(function () {
         window.location.reload();
-        setOrderDeliveringAllAlert('')
+        setOrderDeliveringAllAlert("");
       }, 2000);
       // window.location.reload();
     }
   }
 
-
-
-
-
-
   return (
-    <main id="main" className="main" style={{ marginLeft: -30, marginTop: -10 }}>
+    <main
+      id="main"
+      className="main"
+      style={{ marginLeft: -30, marginTop: -10 }}
+    >
       <div className="pagetitle">
         <h1>Packaged</h1>
         <nav>
@@ -115,7 +130,9 @@ function Deliveries(props) {
                     {orders &&
                       orders.map((order) => (
                         <tr key={order._id}>
-                          <th scope="row" style={{ height: 100, width: 20 }}>{order._id}</th>
+                          <th scope="row" style={{ height: 100, width: 20 }}>
+                            {order._id}
+                          </th>
                           <td>{order.Reciever_Name}</td>
 
                           <td>{order.Shpiing_Address}</td>
@@ -124,13 +141,19 @@ function Deliveries(props) {
                           <td>{order.Status}</td>
                           <td>{order.DelevaryStatus}</td>
                           <td>
-                            <button type="button" class="btn btn-warning" onClick={() => {
-                              handleUpdateontheway(order._id);
-                            }}>
-                              <i style={{ color: "white" }} class="bi bi-truck-front-fill"></i>
+                            <button
+                              type="button"
+                              class="btn btn-warning"
+                              onClick={() => {
+                                handleUpdateontheway(order._id);
+                              }}
+                            >
+                              <i
+                                style={{ color: "white" }}
+                                class="bi bi-truck-front-fill"
+                              ></i>
                             </button>
                           </td>
-                        
                         </tr>
                       ))}
                   </tbody>

@@ -7,10 +7,9 @@ function Deliveriescompleted(props) {
   const { id } = useParams();
   const navigate = useNavigate();
 
-  useEffect(() => { setOrders(props.orders) }
-    , [props.orders])
-
-
+  useEffect(() => {
+    setOrders(props.orders);
+  }, [props.orders]);
 
   //* Update the Delivering status
   async function handleUpdateontheway(orderId) {
@@ -19,6 +18,7 @@ function Deliveriescompleted(props) {
       body: JSON.stringify({ DelevaryStatus: "Delivering" }),
       headers: {
         "Content-Type": "application/json",
+        "X-CSRF-Token": localStorage.getItem("csrfToken"),
       },
     });
 
@@ -36,8 +36,6 @@ function Deliveriescompleted(props) {
     }
   }
 
-
-
   //* Update the Completed status
   async function handleUpdateCompleted(orderId) {
     const response = await fetch(`/api/orders/completed/${orderId}`, {
@@ -45,6 +43,7 @@ function Deliveriescompleted(props) {
       body: JSON.stringify({ DelevaryStatus: "Completed" }),
       headers: {
         "Content-Type": "application/json",
+        "X-CSRF-Token": localStorage.getItem("csrfToken"),
       },
     });
 
@@ -55,16 +54,17 @@ function Deliveriescompleted(props) {
     }
 
     if (response.ok) {
-      alert(
-        "delivery status update as Completed for Delivery ID : " + orderId
-      );
+      alert("delivery status update as Completed for Delivery ID : " + orderId);
       window.location.reload();
     }
   }
 
-
   return (
-    <main id="main" className="main" style={{ marginLeft: -30, marginTop: -10 }}>
+    <main
+      id="main"
+      className="main"
+      style={{ marginLeft: -30, marginTop: -10 }}
+    >
       <div className="pagetitle">
         <h1>Completed</h1>
         <nav>
@@ -103,7 +103,9 @@ function Deliveriescompleted(props) {
                     {orders &&
                       orders.map((order) => (
                         <tr key={order._id}>
-                          <th scope="row" style={{ height: 100, width: 20 }}>{order._id}</th>
+                          <th scope="row" style={{ height: 100, width: 20 }}>
+                            {order._id}
+                          </th>
                           <td>{order.Reciever_Name}</td>
 
                           <td>{order.Shpiing_Address}</td>

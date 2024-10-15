@@ -17,7 +17,7 @@ export default function AddCustomerPayment() {
   const [cvcNumberERR, setCvcNumberERR] = useState({});
   const [expireDateERR, setExpireERR] = useState({});
   const [expireDateERR2, setExpireERR2] = useState({});
-
+  const [csrfToken, setCsrfToken] = useState("");
   const [user, setUser] = useState(() => {
     // getting stored value
     const saved = localStorage.getItem("user");
@@ -25,6 +25,23 @@ export default function AddCustomerPayment() {
     return initialValue || "";
   });
 
+  useEffect(() => {
+    console.log("Fetching CSRF token...");
+    fetch("/api/csrf-token", {
+      method: "GET",
+      credentials: "include",
+    })
+      .then((res) => {
+        console.log("CSRF token response:", res);
+        return res.json();
+      })
+      .then((data) => {
+        console.log("CSRF token data:", data);
+        setCsrfToken(data.csrfToken);
+        localStorage.setItem("csrfToken", data.csrfToken);
+      })
+      .catch((err) => console.error("Error fetching CSRF token:", err));
+  }, []);
   useEffect(() => {
     setCusID(user.id);
   });
@@ -136,26 +153,31 @@ export default function AddCustomerPayment() {
     return isValid;
   };
 
-  const sendDataToAPI = (e) => {
+  const sendDataToAPI = async (e) => {
     e.preventDefault();
     const isValid = formValidation();
     if (isValid) {
-      axios.post("http://localhost:5050/api/v3/payment/", {
-        number,
-        name,
-        expiry,
-        cvc,
-        customer_id,
+      const res = await fetch("/api/v3/payment", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-CSRF-Token": localStorage.getItem("csrfToken"),
+        },
+        body: JSON.stringify({
+          number,
+          name,
+          expiry,
+          cvc,
+          customer_id,
+        }),
       });
-      toast.success(`Order placed successfully `, {
-        position: "bottom-left",
-      });
-      setTimeout(() => {
+
+      if (res.status === 200) {
+        toast.success("Payment Added Successfully");
         window.location = "/account";
-      }, 2000);
+      }
     }
   };
-
   return (
     <section
       class="section"

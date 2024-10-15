@@ -30,17 +30,13 @@ const createPayment = async (req, res) => {
     Card_CVC: xss(req.body.cvc),
   });
 
-  // Save payment to the database
   await payment.save();
+  // sendEmail(
+  //   xss(req.body.email),
+  //   "Payment successful",
+  //   "Your payment was completed successfully."
+  // );
 
-  // Send confirmation email
-  sendEmail(
-    xss(req.body.email),
-    "Payment successful",
-    "Your payment was completed successfully."
-  );
-
-  // Return the saved payment object (sanitized)
   res.send(xss(payment));
 };
 
@@ -63,11 +59,11 @@ const updatePayment = async (req, res) => {
     { new: true }
   );
 
-  sendEmail(
-    xss(req.body.email),
-    "Payment successful",
-    "Your payment was completed successfully."
-  );
+  // sendEmail(
+  //   xss(req.body.email),
+  //   "Payment successful",
+  //   "Your payment was completed successfully."
+  // );
   res.send(xss(payment));
 };
 

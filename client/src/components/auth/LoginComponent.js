@@ -1,4 +1,4 @@
-import { React, useState } from "react";
+import { React, useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { useLogin } from "../../hooks/useLogin";
 import { GoogleLogin } from "@react-oauth/google"; // Import Google OAuth component
@@ -8,12 +8,27 @@ function LoginComponent() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const { login, error, isLoading } = useLogin();
+  const [csrfToken, setCsrfToken] = useState("");
 
   // Handle email/password login
   const handleSubmit = async (e) => {
     e.preventDefault();
     await login(email, password);
   };
+
+  useEffect(() => {
+    // Fetch CSRF token when component mounts
+    fetch("/api/csrf-token", {
+      method: "GET",
+      credentials: "include",
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        setCsrfToken(data.csrfToken);
+        localStorage.setItem("csrfToken", data.csrfToken);
+      })
+      .catch((err) => console.error("Error fetching CSRF token:", err));
+  }, []);
 
   // Handle Google OAuth success
   const handleGoogleSuccess = (credentialResponse) => {
@@ -24,7 +39,11 @@ function LoginComponent() {
     // Send token to backend for verification or account creation
     fetch("http://localhost:5050/api/users/auth/google/callback", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        "Content-Type": "application/json",
+        "X-CSRF-Token": csrfToken,
+      },
+      credentials: "include",
       body: JSON.stringify({ token }),
     })
       .then((res) => res.json())
