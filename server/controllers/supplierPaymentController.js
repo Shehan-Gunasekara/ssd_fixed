@@ -1,20 +1,52 @@
 const { json } = require("express");
 const SupplierPayment = require("../models/SupplierPayment");
 const xss = require("xss");
+const sanitize = require("mongo-sanitize");
+const Joi = require('joi');
+
+const paymentSchema = Joi.object({
+  supplierName: Joi.string().required(),
+  supplierID: Joi.string().required(),
+  orderID: Joi.string().required(),
+  amount: Joi.number().required(),
+  transactionDate: Joi.date().required(),
+  paymentReferenceNo: Joi.string().required(),
+  fileName: Joi.string().optional().allow('')
+});
 
 const newSupplierPayment = async (req, res) => {
-  console.log(xss(req.body.transactionDate));
-  const newSupplierPayment = new SupplierPayment({
-    supplierName: xss(req.body.supplierName),
-    supplierID: xss(req.body.supplierId),
-    orderID: xss(req.body.order_ID),
-    amount: xss(req.body.amount),
-    transactionDate: xss(req.body.transactionDate),
-    paymentReferenceNo: xss(req.body.paymentReferenceNo),
-    fileName: xss(req.body.fileName),
-  });
-  await newSupplierPayment.save();
-  res.send(xss(newSupplierPayment));
+  try {
+    // Validate input using Joi
+    const { error } = paymentSchema.validate(req.body);
+    if (error) return res.status(400).send({ message: error.details[0].message });
+
+    // Sanitize input to prevent NoSQL injection
+    const sanitizedBody = sanitize(req.body);
+
+    // Use XSS sanitization on the sanitized input
+    const newSupplierPayment = new SupplierPayment({
+      supplierName: xss(sanitizedBody.supplierName),
+      supplierID: xss(sanitizedBody.supplierID),
+      orderID: xss(sanitizedBody.orderID),
+      amount: xss(sanitizedBody.amount),
+      transactionDate: xss(sanitizedBody.transactionDate),
+      paymentReferenceNo: xss(sanitizedBody.paymentReferenceNo),
+      fileName: xss(sanitizedBody.fileName),
+    });
+
+    // Save to the database
+    await newSupplierPayment.save();
+
+    // Send a safe response (avoid sending raw database object directly)
+    res.send({
+      id: newSupplierPayment._id,
+      supplierName: newSupplierPayment.supplierName,
+      amount: newSupplierPayment.amount,
+      transactionDate: newSupplierPayment.transactionDate,
+    });
+  } catch (err) {
+    res.status(500).send({ message: 'Internal Server Error', error: err.message });
+  }
 };
 
 //* all supplier payments

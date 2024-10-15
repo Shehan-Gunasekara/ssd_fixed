@@ -60,26 +60,46 @@ const getProduct = async (req, res) => {
   res.status(200).json(product);
 };
 
-//UPDATE details of a single product
+// UPDATE details of a single product
 const updateProduct = async (req, res) => {
   const { id } = req.params;
 
+  // Validate ObjectId
   if (!mongoose.Types.ObjectId.isValid(id)) {
     return res.status(404).json({ error: "Product does not exist" });
   }
 
-  const product = await InventoryProducts.findOneAndUpdate(
-    { _id: id },
-    {
-      ...req.body,
-    }
-  );
+  // Input validation
+  await check('name').optional().isString().run(req);
+  await check('price').optional().isFloat({ gt: 0 }).run(req);
+  await check('description').optional().isString().run(req);
+  await check('stock').optional().isInt({ min: 0 }).run(req);
 
-  if (!product) {
-    return res.status(404).json({ error: "Product does not exist" });
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return res.status(400).json({ errors: errors.array() });
   }
 
-  res.status(200).json(product);
+  // Whitelist allowed fields
+  const { name, price, description, stock } = req.body;
+  const updateData = { name, price, description, stock };
+
+  try {
+    // Find and update product
+    const product = await InventoryProducts.findOneAndUpdate(
+      { _id: id },
+      updateData,
+      { new: true } // Return the updated product
+    );
+
+    if (!product) {
+      return res.status(404).json({ error: "Product does not exist" });
+    }
+
+    res.status(200).json(product);
+  } catch (error) {
+    res.status(500).json({ error: "An error occurred while updating the product" });
+  }
 };
 
 //DELETE a single product
