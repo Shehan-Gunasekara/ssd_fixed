@@ -12,13 +12,12 @@ const createPayment = async (req, res) => {
     Card_expiry_date: xss(req.body.expiry),
     Card_CVC: xss(req.body.cvc),
   });
-
   await payment.save();
-  sendEmail(
-    xss(req.body.email),
-    "Payment successful",
-    "Your payment was completed successfully."
-  );
+  // sendEmail(
+  //   xss(req.body.email),
+  //   "Payment successful",
+  //   "Your payment was completed successfully."
+  // );
   res.send(xss(payment));
 };
 
@@ -40,11 +39,11 @@ const updatePayment = async (req, res) => {
     { new: true }
   );
 
-  sendEmail(
-    xss(req.body.email),
-    "Payment successful",
-    "Your payment was completed successfully."
-  );
+  // sendEmail(
+  //   xss(req.body.email),
+  //   "Payment successful",
+  //   "Your payment was completed successfully."
+  // );
   res.send(xss(payment));
 };
 

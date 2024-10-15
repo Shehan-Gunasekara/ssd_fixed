@@ -1,5 +1,6 @@
 require("dotenv").config();
-
+const csrf = require("csurf");
+const cookieParser = require("cookie-parser");
 const express = require("express");
 const multer = require("multer");
 const rateLimit = require("express-rate-limit");
@@ -60,6 +61,47 @@ const corsOptions = {
 };
 app.use(cors(corsOptions));
 
+// Middleware for parsing cookies
+app.use(cookieParser());
+app.use(express.json());
+// Set up CSRF protection middleware but apply it conditionally
+const csrfProtection = csrf({ cookie: true });
+app.use(csrfProtection);
+// Set up express session
+app.use(
+  session({
+    secret: process.env.SESSION_SECRET,
+    resave: false,
+    saveUninitialized: true,
+    cookie: {
+      secure: process.env.NODE_ENV === "production", // Set true if using HTTPS in production
+    },
+  })
+);
+
+// Apply CSRF protection to all routes except /api/csrf-token
+app.use((req, res, next) => {
+  if (req.path === "/api/csrf-token") {
+    next();
+  } else {
+    csrfProtection(req, res, next);
+  }
+});
+
+// Middleware to set CSRF token in response locals
+app.use((req, res, next) => {
+  res.locals.csrfToken = req.csrfToken ? req.csrfToken() : null;
+  next();
+});
+
+// Example route where you pass the CSRF token to the client
+app.get("/api/csrf-token", (req, res) => {
+  // console.log("CSRF token generated and sent to client", {
+  //   csrfToken: req.csrfToken ? req.csrfToken() : null,
+  // });
+  res.json({ csrfToken: req.csrfToken ? req.csrfToken() : null });
+});
+
 // middleware
 app.use(express.json());
 app.use((req, res, next) => {
@@ -102,7 +144,6 @@ app.use("/api/v7/orderedProduct", orderedProductRoutes);
 app.use("/api/v8/incomeHistory", incomeHistory);
 app.use("/api/v9/supplierOrder", supplierOrder);
 app.use("/api/v1/eBill", E_billRoutes);
-app.use("/api/v3/payment", Payments);
 app.use("/api/v4/Delevery", Delivary);
 app.use("/api/v5/Cart", Cart);
 
@@ -156,7 +197,7 @@ app.use("/api/v7/orderedProduct", orderedProductRoutes);
 app.use("/api/v8/incomeHistory", incomeHistory);
 app.use("/api/v9/supplierOrder", supplierOrder);
 app.use("/api/v1/eBill", E_billRoutes);
-app.use("/api/v3/payment", Payments);
+
 app.use("/api/v4/Delevery", Delivary);
 app.use("/api/v5/Cart", Cart);
 

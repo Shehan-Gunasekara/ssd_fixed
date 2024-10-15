@@ -23,9 +23,16 @@ function CustomerAccount() {
   const [customerOrders, setCustomerOrders] = useState([]);
 
   useEffect(() => {
-    axios.get(`/api/orders/${user.id}`).then((getData) => {
-      setCustomerOrders(getData.data);
-    });
+    axios
+      .get(`/api/orders/${user.id}`, {
+        headers: {
+          "Content-Type": "application/json",
+          "X-CSRF-Token": localStorage.getItem("csrfToken"),
+        },
+      })
+      .then((getData) => {
+        setCustomerOrders(getData.data);
+      });
   }, []);
 
   const [user, setUser] = useState(() => {
@@ -49,7 +56,12 @@ function CustomerAccount() {
 
   useEffect(() => {
     const fetchCustomer = async () => {
-      const response = await fetch(`/api/users/${user.id}`);
+      const response = await fetch(`/api/users/${user.id}`, {
+        headers: {
+          "Content-Type": "application/json",
+          "X-CSRF-Token": localStorage.getItem("csrfToken"),
+        },
+      });
       const json = await response.json();
       if (response.ok) {
         setCustomer({
@@ -87,6 +99,7 @@ function CustomerAccount() {
       }),
       headers: {
         "Content-type": "application/json; charset=UTF-8",
+        "X-CSRF-Token": localStorage.getItem("csrfToken"),
       },
     });
     const json = await response.json();
@@ -112,6 +125,7 @@ function CustomerAccount() {
       body: JSON.stringify(siteFeedback),
       headers: {
         "Content-Type": "application/json",
+        "X-CSRF-Token": localStorage.getItem("csrfToken"),
       },
     });
     const json = await response.json();
@@ -142,6 +156,7 @@ function CustomerAccount() {
         }),
         headers: {
           "Content-type": "application/json; charset=UTF-8",
+          "X-CSRF-Token": localStorage.getItem("csrfToken"),
         },
       }
     );
@@ -170,18 +185,69 @@ function CustomerAccount() {
   const [apiData, setApiData] = useState([]);
 
   useEffect(() => {
-    axios
-      .get(`http://localhost:5050/api/v3/payment/getPayment/${user.id}`)
-      .then((getData) => {
-        setApiData(getData.data);
-        setNumber(getData.data.Card_Number);
-        setHName(getData.data.Card_holder_name);
-        setExpiry(getData.data.Card_expiry_date);
-        setCvc(getData.data.Card_CVC);
-      });
+    const fun = async () => {
+      try {
+        const response = await fetch(
+          `http://localhost:5050/api/v3/payment/getPayment/${user.id}`,
+          {
+            method: "GET",
+            headers: {
+              "Content-Type": "application/json",
+              "X-CSRF-Token": localStorage.getItem("csrfToken"),
+            },
+          }
+        );
+
+        console.log("Response status:", response.status);
+        console.log("Response headers:", response.headers);
+
+        const contentType = response.headers.get("content-type");
+        if (contentType && contentType.includes("application/json")) {
+          const data = await response.json();
+          console.log("JSON Response data:", data);
+          setApiData(data);
+        } else {
+          const text = await response.text();
+          console.log("Text Response data:", text);
+          const data = JSON.parse(text);
+          console.log("Parsed JSON data:", data);
+          setApiData(data);
+          setNumber(data.Card_Number);
+          setHName(data.Card_holder_name);
+          setExpiry(data.Card_expiry_date);
+          setCvc(data.Card_CVC);
+        }
+
+        if (!response.ok) {
+          console.error("HTTP-Error:", response.status);
+        }
+      } catch (error) {
+        console.error("Fetch error:", error);
+      }
+      // .then((response) => {
+      //   if (!response.ok) {
+      //     throw new Error("Network response was not ok");
+      //   }
+      //   console.log("rrrrrrrrrrrrrrrrrrr", response);
+      //   return response.json();
+      // })
+      // .then((data) => {
+      //   setApiData(data);
+      //   setNumber(data.Card_Number);
+      //   setHName(data.Card_holder_name);
+      //   setExpiry(data.Card_expiry_date);
+      //   setCvc(data.Card_CVC);
+      // })
+      // .catch((error) => {
+      //   console.error("There was a problem with the fetch operation:", error);
+      // });
+    };
+    fun();
   }, []);
 
   const [isData, setData] = useState(false);
+
+  console.log("apiData-------", apiData);
 
   function checkdata() {
     if (apiData == []) {
@@ -196,23 +262,39 @@ function CustomerAccount() {
   const onDelete = (e) => {
     e.preventDefault();
 
-    axios
-      .delete(`http://localhost:5050/api/v3/payment/removePayment/${user.id}`)
-      .then(() => {});
-    toast.success(`Payment details removed successfully`, {
-      position: "bottom-left",
-    });
-    setTimeout(() => {
-      window.location = "/account";
-    }, 2000);
+    fetch(`http://localhost:5050/api/v3/payment/removePayment/${user.id}`, {
+      headers: {
+        "Content-Type": "application/json",
+        "X-CSRF-Token": localStorage.getItem("csrfToken"),
+      },
+    })
+      .then((response) => {
+        if (!response.ok) {
+          throw new Error("Network response was not ok");
+        }
+        return response.json();
+      })
+      .then(() => {
+        toast.success(`Payment details removed successfully`, {
+          position: "bottom-left",
+        });
+        setTimeout(() => {
+          // window.location = "/account";
+        }, 2000);
+      })
+      .catch((error) => {
+        console.error("There was a problem with the delete operation:", error);
+        toast.error(`Failed to remove payment details`, {
+          position: "bottom-left",
+        });
+      });
   };
-
   const [userNameERR, setuserNameERR] = useState({});
   const [cardNumberERR, setCardNumberERR] = useState({});
   const [cvcNumberERR, setCvcNumberERR] = useState({});
   const [expireDateERR, setExpireERR] = useState({});
   const [expireDateERR2, setExpireERR2] = useState({});
-
+  const [csrfToken, setCsrfToken] = useState("");
   function isEmpty(txt) {
     if (txt.length === 0) {
       return true;
@@ -314,29 +396,67 @@ function CustomerAccount() {
     setExpireERR2(expireDateERR2);
     return isValid;
   };
+  useEffect(() => {
+    console.log("Fetching CSRF token...");
+    fetch("/api/csrf-token", {
+      method: "GET",
+      credentials: "include",
+    })
+      .then((res) => {
+        console.log("CSRF token response:", res);
+        return res.json();
+      })
+      .then((data) => {
+        console.log("CSRF token data:", data);
+        setCsrfToken(data.csrfToken);
+        localStorage.setItem("csrfToken", data.csrfToken);
+      })
+      .catch((err) => console.error("Error fetching CSRF token:", err));
+  }, []);
 
-  const sendDataToAPI = (e) => {
+  const sendDataToAPI = async (e) => {
     e.preventDefault();
     const isValid = formValidation();
     if (isValid) {
-      axios.put(
-        `http://localhost:5050/api/v3/payment/updatePayment/${user.id}`,
-        {
-          number,
-          Hname,
-          expiry,
-          cvc,
-        }
-      );
-      toast.success(`Order placed successfully `, {
-        position: "bottom-left",
-      });
-      setTimeout(() => {
-        window.location = "/account";
-      }, 2000);
+      try {
+        // First, fetch the CSRF token
+        const csrfResponse = await axios.get("/api/csrf-token", {
+          withCredentials: true,
+        });
+        const csrfToken = csrfResponse.data.csrfToken;
+
+        // Then, make the PUT request with the CSRF token included
+        await axios.put(
+          `http://localhost:5050/api/v3/payment/updatePayment/${user.id}`,
+          {
+            number,
+            Hname,
+            expiry,
+            cvc,
+          },
+          {
+            headers: {
+              "Content-Type": "application/json",
+              "X-CSRF-Token": csrfToken,
+            },
+            withCredentials: true,
+          }
+        );
+
+        toast.success(`Payment details updated successfully`, {
+          position: "bottom-left",
+        });
+        setTimeout(() => {
+          window.location = "/account";
+        }, 2000);
+      } catch (error) {
+        console.error("There was a problem with the update operation:", error);
+        toast.error(`Failed to update payment details: ${error.message}`, {
+          position: "bottom-left",
+        });
+      }
     }
   };
-
   return (
     <div class="liton__wishlist-area pb-70">
       <div class="container">
@@ -358,9 +478,9 @@ function CustomerAccount() {
                         <a data-toggle="tab" href="#liton_tab_1_2">
                           Orders{" "}
                         </a>
-                        <a data-toggle="tab" href="#liton_tab_1_3">
+                        {/* <a data-toggle="tab" href="#liton_tab_1_3">
                           Payment Method{" "}
-                        </a>
+                        </a> */}
                         <a data-toggle="tab" href="#liton_tab_1_4">
                           Account Details{" "}
                         </a>
@@ -424,7 +544,7 @@ function CustomerAccount() {
                       <div class="tab-pane fade" id="liton_tab_1_3">
                         <div class="ltn__myaccount-tab-content-inner">
                           <div class="row">
-                            {checkdata() ? (
+                            {apiData.length == 0 ? (
                               <div class="col-md-6 col-10 learts-mb-30">
                                 <div
                                   class="alert alert-danger alert-dismissible fade show"

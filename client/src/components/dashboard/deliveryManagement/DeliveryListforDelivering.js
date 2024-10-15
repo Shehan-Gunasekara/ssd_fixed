@@ -7,14 +7,13 @@ function Deliveries(props) {
   const { id } = useParams();
   const navigate = useNavigate();
 
+  const [orderCompletedAllAlert, setOrderCompletedAllAlert] = useState("");
+  const [orderCompletedAllAlertError, setOrderCompletedAllAlertError] =
+    useState("");
 
-  const [orderCompletedAllAlert, setOrderCompletedAllAlert] = useState('')
-  const [orderCompletedAllAlertError, setOrderCompletedAllAlertError] = useState('')
-
-
-  useEffect(() => { setOrders(props.orders) }
-    , [props.orders])
-
+  useEffect(() => {
+    setOrders(props.orders);
+  }, [props.orders]);
 
   //* Update the Delivering status
   async function handleUpdateontheway(orderId) {
@@ -23,6 +22,7 @@ function Deliveries(props) {
       body: JSON.stringify({ DelevaryStatus: "Delivering" }),
       headers: {
         "Content-Type": "application/json",
+        "X-CSRF-Token": localStorage.getItem("csrfToken"),
       },
     });
 
@@ -40,8 +40,6 @@ function Deliveries(props) {
     }
   }
 
-
-
   //* Update the Completed status
   async function handleUpdateCompleted(orderId) {
     const response = await fetch(`/api/orders/completed/${orderId}`, {
@@ -49,51 +47,68 @@ function Deliveries(props) {
       body: JSON.stringify({ DelevaryStatus: "Completed" }),
       headers: {
         "Content-Type": "application/json",
+        "X-CSRF-Token": localStorage.getItem("csrfToken"),
       },
     });
 
     const json = await response.json();
 
     if (!response.ok) {
-
       setOrderCompletedAllAlertError(
         <>
-          <div className="alert alert-danger alert-dismissible fade show" role="alert">
+          <div
+            className="alert alert-danger alert-dismissible fade show"
+            role="alert"
+          >
             <i className="bi bi-exclamation-octagon me-1"></i>
             Failed to update the status as Completed! &nbsp;
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            <button
+              type="button"
+              class="btn-close"
+              data-bs-dismiss="alert"
+              aria-label="Close"
+            ></button>
           </div>
         </>
-      )
+      );
 
       setTimeout(function () {
         window.location.reload();
-        setOrderCompletedAllAlertError('')
+        setOrderCompletedAllAlertError("");
       }, 2000);
     }
 
     if (response.ok) {
-
       setOrderCompletedAllAlert(
         <>
-          <div className="alert alert-success alert-dismissible fade show" role="alert">
+          <div
+            className="alert alert-success alert-dismissible fade show"
+            role="alert"
+          >
             <i className="bi bi-check-circle me-1"></i>
             delivery status update as "Completed" for Order ID : {orderId}
-            <button type="button" className="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            <button
+              type="button"
+              className="btn-close"
+              data-bs-dismiss="alert"
+              aria-label="Close"
+            ></button>
           </div>
         </>
-      )
+      );
       setTimeout(function () {
         window.location.reload();
-        setOrderCompletedAllAlert('')
+        setOrderCompletedAllAlert("");
       }, 2000);
-
     }
   }
 
-
   return (
-    <main id="main" className="main" style={{ marginLeft: -30, marginTop: -10 }}>
+    <main
+      id="main"
+      className="main"
+      style={{ marginLeft: -30, marginTop: -10 }}
+    >
       <div className="pagetitle">
         <h1>Delivering</h1>
         <nav>
@@ -134,22 +149,27 @@ function Deliveries(props) {
                     {orders &&
                       orders.map((order) => (
                         <tr key={order._id}>
-                          <th scope="row" style={{ height: 100, width: 20 }}>{order._id}</th>
+                          <th scope="row" style={{ height: 100, width: 20 }}>
+                            {order._id}
+                          </th>
                           <td>{order.Reciever_Name}</td>
 
                           <td>{order.Shpiing_Address}</td>
                           <td>{order.Phone}</td>
                           <td>{order.Date}</td>
                           <td>{order.DelevaryStatus}</td>
-                          
+
                           <td>
-                            <button type="button" class="btn btn-success" onClick={() => {
-                              handleUpdateCompleted(order._id);
-                            }}>
+                            <button
+                              type="button"
+                              class="btn btn-success"
+                              onClick={() => {
+                                handleUpdateCompleted(order._id);
+                              }}
+                            >
                               <i class="bi bi-check2-square"></i>
                             </button>
                           </td>
-                
                         </tr>
                       ))}
                   </tbody>

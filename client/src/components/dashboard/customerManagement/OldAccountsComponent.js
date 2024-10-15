@@ -11,6 +11,10 @@ function AccountUsage() {
   const handleDeleteSubmit = async (e) => {
     const response = await fetch("http://localhost:5050/api/users/" + e, {
       method: "DELETE",
+      headers: {
+        "Content-Type": "application/json",
+        "X-CSRF-Token": localStorage.getItem("csrfToken"),
+      },
     });
     const json = await response.json();
 
@@ -47,7 +51,12 @@ function AccountUsage() {
 
   useEffect(() => {
     const fetchCustomers = async () => {
-      const response = await fetch(`/api/users/old-users`);
+      const response = await fetch(`/api/users/old-users`, {
+        headers: {
+          "Content-Type": "application/json",
+          "X-CSRF-Token": localStorage.getItem("csrfToken"),
+        },
+      });
       const json = await response.json();
       console.log(json);
       //console.log(json[0])
