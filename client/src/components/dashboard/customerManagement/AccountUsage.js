@@ -37,6 +37,10 @@ function AccountUsage() {
   const handleDeleteSubmit = async (e) => {
     const response = await fetch("http://localhost:5050/api/users/" + e, {
       method: "DELETE",
+      headers: {
+        "Content-Type": "application/json",
+        "X-CSRF-Token": localStorage.getItem("csrfToken"),
+      },
     });
     const json = await response.json();
 
@@ -82,7 +86,12 @@ function AccountUsage() {
 
   useEffect(() => {
     const fetchChartData = async () => {
-      const { data } = await axios.get(`/api/users/usage`);
+      const { data } = await axios.get(`/api/users/usage`, {
+        headers: {
+          "Content-Type": "application/json",
+          "X-CSRF-Token": localStorage.getItem("csrfToken"),
+        },
+      });
       console.log(data.map((item) => item.month));
 
       setChartData({
@@ -106,7 +115,12 @@ function AccountUsage() {
 
   useEffect(() => {
     const fetchCustomers = async () => {
-      const response = await fetch(`/api/users/old-users`);
+      const response = await fetch(`/api/users/old-users`, {
+        headers: {
+          "Content-Type": "application/json",
+          "X-CSRF-Token": localStorage.getItem("csrfToken"),
+        },
+      });
       const json = await response.json();
       console.log(json);
       if (response.ok) {

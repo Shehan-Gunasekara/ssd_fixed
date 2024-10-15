@@ -63,6 +63,10 @@ function Customers() {
   const handleDeleteSubmit = async (e) => {
     const response = await fetch("http://localhost:5050/api/users/" + e, {
       method: "DELETE",
+      headers: {
+        "Content-Type": "application/json",
+        "X-CSRF-Token": localStorage.getItem("csrfToken"),
+      },
     });
     const json = await response.json();
 

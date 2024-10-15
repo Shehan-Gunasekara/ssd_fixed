@@ -67,7 +67,12 @@ function Customers() {
 
   useEffect(() => {
     const fetchPrivateSiteFeedbacks = async () => {
-      const response = await fetch(`/api/site-feedbacks/private`);
+      const response = await fetch(`/api/site-feedbacks/private`, {
+        headers: {
+          "Content-Type": "application/json",
+          "X-CSRF-Token": localStorage.getItem("csrfToken"),
+        },
+      });
       const json = await response.json();
       console.log(json);
       if (response.ok) {
@@ -82,7 +87,12 @@ function Customers() {
 
   useEffect(() => {
     const fetchPublicSiteFeedbacks = async () => {
-      const response = await fetch(`/api/site-feedbacks/public`);
+      const response = await fetch(`/api/site-feedbacks/public`, {
+        headers: {
+          "Content-Type": "application/json",
+          "X-CSRF-Token": localStorage.getItem("csrfToken"),
+        },
+      });
       const json = await response.json();
       console.log(json);
       if (response.ok) {
@@ -103,6 +113,7 @@ function Customers() {
         }),
         headers: {
           "Content-type": "application/json; charset=UTF-8",
+          "X-CSRF-Token": localStorage.getItem("csrfToken"),
         },
       }
     );
@@ -129,6 +140,7 @@ function Customers() {
         }),
         headers: {
           "Content-type": "application/json; charset=UTF-8",
+          "X-CSRF-Token": localStorage.getItem("csrfToken"),
         },
       }
     );

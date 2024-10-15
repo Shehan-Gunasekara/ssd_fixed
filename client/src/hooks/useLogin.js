@@ -1,40 +1,43 @@
-import {useState} from 'react'
-import { useAuthContext } from './useAuthContext'
-import { useNavigate } from 'react-router-dom'
+import { useState } from "react";
+import { useAuthContext } from "./useAuthContext";
+import { useNavigate } from "react-router-dom";
 
 export const useLogin = () => {
-    const navigate = useNavigate();
-    const [error, setError] = useState(null)
-    const [isLoading, setIsLoading] = useState(null)
-    const {dispatch} = useAuthContext()
+  const navigate = useNavigate();
+  const [error, setError] = useState(null);
+  const [isLoading, setIsLoading] = useState(null);
+  const { dispatch } = useAuthContext();
 
-    const login = async (email, password) => {
-        setIsLoading(true)
-        setError(null)
+  const login = async (email, password) => {
+    setIsLoading(true);
+    setError(null);
 
-        const response = await fetch('/api/users/login', {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({email, password})
-        })
+    const response = await fetch("/api/users/login", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-CSRF-Token": localStorage.getItem("csrfToken"),
+      },
+      body: JSON.stringify({ email, password }),
+    });
 
-        const json = await response.json()
-        if(!response.ok){
-            setIsLoading(false)
-            setError(json.error)
-        }
-
-        if(response.ok){
-            // save the user to local staorage
-            localStorage.setItem('user', JSON.stringify(json))
-
-            // update the auth context
-            dispatch({type: 'LOGIN', payload: json})
-
-            setIsLoading(false)
-            navigate("/account");
-        }
+    const json = await response.json();
+    if (!response.ok) {
+      setIsLoading(false);
+      setError(json.error);
     }
 
-    return {login, isLoading, error}
-}
+    if (response.ok) {
+      // save the user to local staorage
+      localStorage.setItem("user", JSON.stringify(json));
+
+      // update the auth context
+      dispatch({ type: "LOGIN", payload: json });
+
+      setIsLoading(false);
+      navigate("/account");
+    }
+  };
+
+  return { login, isLoading, error };
+};

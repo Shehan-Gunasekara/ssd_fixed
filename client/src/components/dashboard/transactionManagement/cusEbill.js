@@ -339,13 +339,20 @@ function CusEbill() {
   const [userData, setUserData] = useState([]);
 
   const fetchUserDetails = () => {
-    axios.get(`http://localhost:5050/api/users/${user.id}`).then((getData) => {
-      setUserData(getData.data);
-      setRecieverNAme(getData.data.name);
-      setAddress(getData.data.address);
-      setPhoneNumber(getData.data.phone);
-      setEmail(getData.data.email);
-    });
+    axios
+      .get(`http://localhost:5050/api/users/${user.id}`, {
+        headers: {
+          "Content-Type": "application/json",
+          "X-CSRF-Token": localStorage.getItem("csrfToken"),
+        },
+      })
+      .then((getData) => {
+        setUserData(getData.data);
+        setRecieverNAme(getData.data.name);
+        setAddress(getData.data.address);
+        setPhoneNumber(getData.data.phone);
+        setEmail(getData.data.email);
+      });
   };
   const aa = 45;
 

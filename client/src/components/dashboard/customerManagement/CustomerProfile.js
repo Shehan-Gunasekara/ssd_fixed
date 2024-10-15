@@ -30,7 +30,12 @@ function CustomerProfile() {
 
   useEffect(() => {
     const fetchCustomer = async () => {
-      const response = await fetch(`/api/users/${id}`);
+      const response = await fetch(`/api/users/${id}`, {
+        headers: {
+          "Content-Type": "application/json",
+          "X-CSRF-Token": localStorage.getItem("csrfToken"),
+        },
+      });
       const json = await response.json();
       if (response.ok) {
         setCustomer({
@@ -68,6 +73,7 @@ function CustomerProfile() {
       }),
       headers: {
         "Content-type": "application/json; charset=UTF-8",
+        "X-CSRF-Token": localStorage.getItem("csrfToken"),
       },
     });
     const json = await response.json();
@@ -97,6 +103,7 @@ function CustomerProfile() {
         }),
         headers: {
           "Content-type": "application/json; charset=UTF-8",
+          "X-CSRF-Token": localStorage.getItem("csrfToken"),
         },
       }
     );
@@ -118,6 +125,10 @@ function CustomerProfile() {
 
     const response = await fetch("http://localhost:5050/api/users/" + id, {
       method: "DELETE",
+      headers: {
+        "Content-Type": "application/json",
+        "X-CSRF-Token": localStorage.getItem("csrfToken"),
+      },
     });
     const json = await response.json();
 

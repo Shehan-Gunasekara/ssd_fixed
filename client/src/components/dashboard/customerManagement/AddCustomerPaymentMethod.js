@@ -15,6 +15,7 @@ export default function AddCustomerPayment() {
   const [cardNumberERR, setCardNumberERR] = useState({});
   const [cvcNumberERR, setCvcNumberERR] = useState({});
   const [expireDateERR, setExpireERR] = useState({});
+  const [csrfToken, setCsrfToken] = useState("");
 
   const [user, setUser] = useState(() => {
     // getting stored value
@@ -27,6 +28,23 @@ export default function AddCustomerPayment() {
     setCusID(user.id);
   });
 
+  useEffect(() => {
+    console.log("Fetching CSRF token...");
+    fetch("/api/csrf-token", {
+      method: "GET",
+      credentials: "include",
+    })
+      .then((res) => {
+        console.log("CSRF token response:", res);
+        return res.json();
+      })
+      .then((data) => {
+        console.log("CSRF token data:", data);
+        setCsrfToken(data.csrfToken);
+        localStorage.setItem("csrfToken", data.csrfToken);
+      })
+      .catch((err) => console.error("Error fetching CSRF token:", err));
+  }, []);
   //setCusID(user.id);
   //form validation
   const formValidation = () => {
@@ -79,17 +97,26 @@ export default function AddCustomerPayment() {
     e.preventDefault();
     const isValid = formValidation();
     if (isValid) {
-      axios.post("http://localhost:5050/api/v3/payment/", {
-        number,
-        name,
-        expiry,
-        cvc,
-        customer_id,
-      });
+      axios.post(
+        "http://localhost:5050/api/v3/payment/",
+        {
+          headers: {
+            "Content-Type": "application/json",
+            "X-CSRF-Token": csrfToken,
+          },
+        },
+        {
+          number,
+          name,
+          expiry,
+          cvc,
+          customer_id,
+        }
+      );
       window.location = "/account";
     }
   };
-
+  console.log("aaaaaaaaaa", localStorage.getItem("csrfToken"));
   return (
     <section
       class="section"
